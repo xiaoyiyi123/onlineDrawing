@@ -1,0 +1,112 @@
+<!DOCTYPE>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <link rel="stylesheet" href="css/"/>
+    <style>
+        #example{
+            border:1px solid #797979;
+            background-color: #FFFFFF;
+            height: 376px;
+            width: 348px;
+        }
+        .btn{
+            width: 49%;
+            display: inline-block;
+            height: 51px;
+            font-size: 24px;
+            border: 1px solid #797979;
+            border-top: none;
+            background-color: #FFFFFF;
+        }
+        #btn_clear{
+            background-color:#E4E4E4;
+        }
+        #btn_submit{
+            background-color:#CBCBCB;
+        }
+    </style>
+</head>
+<body>
+<div class="main_container">
+    <div style="width: 350px">
+        <canvas id="example"></canvas>
+    </div>
+    <button id="btn_clear" class="btn">清除</button>
+    <button id="btn_submit" class="btn">确定</button>
+</div>
+<script src="fastclick.js"></script>
+<script src="js/jquery-1.12.4.js"></script>
+<script language="javascript">
+    FastClick.attach(document.body);
+    var CanvasDrawr = function(options) {
+        // 这个是设定画布信息
+        var canvas = document.getElementById(options.id),
+             ctxt = canvas.getContext("2d");
+        canvas.style.width = '100%'
+        canvas.width = canvas.offsetWidth;
+        canvas.style.width = '';
+        // 设定来自options的属性
+        ctxt.lineWidth = 3;
+        ctxt.lineCap = options.lineCap || "round";
+        ctxt.pX = undefined;
+        ctxt.pY = undefined;
+        var lines = [,,];
+        var offset = $(canvas).offset();
+        var clear = document.getElementById("btn_clear");
+        var submit = document.getElementById("btn_submit");
+        clear.addEventListener("click", function(){
+            canvas.width = canvas.width;
+        });
+        submit.addEventListener("click", function(){
+            alert(canvas.toDataURL("image/png"));
+        });
+        var self = {
+            //初始化，绑定touchstart 和 touchmove 事件
+            init: function() {
+                canvas.addEventListener('touchstart', self.preDraw, false);
+                canvas.addEventListener('touchmove', self.draw, false);
+            },
+            preDraw: function(event) {//当touchstart时，获取相对canvas的x\y位置，画笔的颜色
+                $.each(event.touches, function(i, touch) {
+                    var id = touch.identifier,
+                            mycolor ="#000";
+                    lines[id] = { x: this.pageX - offset.left,
+                                  y: this.pageY - offset.top,
+                                  color : mycolor
+                    };
+                });
+                event.preventDefault();
+            },
+            draw: function(event) {//touchmove开始划线
+                var e = event, hmm = {};
+                $.each(event.touches, function(i, touch) {
+                    var id = touch.identifier,
+                            moveX = this.pageX - offset.left - lines[id].x,
+                            moveY = this.pageY - offset.top - lines[id].y;//移动的x\y
+                    var ret = self.move(id, moveX, moveY);//canvas的画线
+                    lines[id].x = ret.x;
+                    lines[id].y = ret.y;
+                });
+                event.preventDefault();
+            },
+            move: function(i, changeX, changeY) {//这个地方需要了解下canvas 的知识哦。
+                ctxt.strokeStyle = lines[i].color;//设定颜色
+                ctxt.beginPath();//开始路径
+                ctxt.moveTo(lines[i].x, lines[i].y);//移动到
+                ctxt.lineTo(lines[i].x + changeX, lines[i].y + changeY);//画线
+                ctxt.stroke();//填充颜色
+                ctxt.closePath();//结束路径
+                return { x: lines[i].x + changeX, y: lines[i].y + changeY };//返回最后的点坐标
+            }
+        };
+        return self.init();//运行init
+    };
+    $(function(){
+        var super_awesome_multitouch_drawing_canvas_thingy = new CanvasDrawr({id:"example", size: 15 });
+    });
+</script>
+</body>
+</html>
